@@ -22,7 +22,7 @@ Usage of conf2kube:
 ### Create a new secret from stdin
 
 ```
-cat redis.conf | conf2kube -n redis.conf -f - | kubectl create -f -
+$ cat redis.conf | conf2kube -n redis.conf -f - | kubectl create -f -
 ```
 
 > The `-f` flag is optional when creating secrets from stdin.
