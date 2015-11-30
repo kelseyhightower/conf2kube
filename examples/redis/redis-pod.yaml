@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: redis
+  name: redis
+spec:
+  containers:
+    - name: redis
+      image: redis:3.0.5
+      args:
+        - "redis-server"
+        - "/usr/local/etc/redis.conf"
+      ports:
+        - containerPort: 6379
+      volumeMounts:
+        - mountPath: "/usr/local/etc/"
+          name: "redis-conf"
+  volumes:
+    - name: "redis-conf"
+      secret:
+        secretName: "redis.conf"
