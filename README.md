@@ -1,6 +1,7 @@
 # conf2kube
 
-conf2kube creates Kubernetes secrets based on contents of configuration files.
+conf2kube creates Kubernetes [secrets](http://kubernetes.io/v1.1/docs/user-guide/secrets.html)
+based on contents of configuration files.
 
 This is not an official Google product.
 
@@ -12,10 +13,19 @@ $ conf2kube -h
 ```
 Usage of conf2kube:
   -f file
-    	Path to configuration file.
+        Path to configuration file. Defaults to stdin. (default "-")
   -n name
-    	The name to use for the Kubernetes secret. Defaults to basename of configuration file.
+        The name to use for the Kubernetes secret. Defaults to basename of configuration file.
+  -x    Extract config from incoming JSON formated secret and print to stdout.
 ```
+
+### Create a new secret from stdin
+
+```
+cat redis.conf | conf2kube -n redis.conf -f - | kubectl create -f -
+```
+
+> The `-f` flag is optional when creating secrets from stdin.
 
 ### Create a new secret from a configuration file
 
@@ -23,37 +33,31 @@ Usage of conf2kube:
 $ conf2kube -f redis.conf | kubectl create -f -
 ```
 
+Use the `-n` flag to create a secret with a specific name.
+
+```
+$ conf2kube -f redis.conf -n redis-master.conf | kubectl create -f -
+```
+
 ### Update an existing secret
+
+Use the `kubectl apply` command to update an existing secret.
 
 ```
 $ conf2kube -f redis.conf | kubectl apply -f -
 ```
 
-### Print the contents of a secret
+### Extract the contents of a secret
 
-conf2kube can print the contents of a secret previously created by conf2kube.
-
-```
-$ kubectl get secrets redis.conf -o json | conf2kube
-```
-
-The secret must have a data element that matches the secret name. All secrets created by
-conf2kube meet this requirement.
+Use the `-x` flag to extract JSON formated secrets from stdin.
 
 ```
-$ kubectl get secrets redis.conf -o yaml
+$ kubectl get secrets redis.conf -o json | conf2kube -x
 ```
+
+Use the `-n` flag to extract a secret by a specific data name. Useful when the data name does
+not match the secret name.
+
 ```
-apiVersion: v1
-data:
-  redis.conf: IyBSZWRpcyBj...
-kind: Secret
-metadata:
-  creationTimestamp: 2015-11-30T04:13:14Z
-  name: redis.conf
-  namespace: default
-  resourceVersion: "11049"
-  selfLink: /api/v1/namespaces/default/secrets/redis.conf
-  uid: ad06b82b-9718-11e5-a6e8-42010af00189
-type: Opaque
+$ kubectl get secrets redis.conf -o json | conf2kube -x -n redis-master.conf
 ```

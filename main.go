@@ -32,22 +32,23 @@ type Secret struct {
 }
 
 func main() {
-	configFilePath := flag.String("f", "", "Path to configuration `file`.")
+	configFilePath := flag.String("f", "-", "Path to configuration `file`. Defaults to stdin.")
 	name := flag.String("n", "", "The `name` to use for the Kubernetes secret. Defaults to basename of configuration file.")
+	extract := flag.Bool("x", false, "Extract configuration file from incoming JSON formated secret and print to stdout.")
 	flag.Parse()
 
 	log.SetFlags(0)
 
-	// With no options set read a JSON formated Kubernetes secret from stdin and
-	// print the contents to stdout. The secret data must match the secret name.
-	if *configFilePath == "" && *name == "" {
+	if *extract {
 		var s Secret
 		decoder := json.NewDecoder(os.Stdin)
 		if err := decoder.Decode(&s); err != nil {
 			log.Fatal(err)
 		}
-		configName := s.Metadata["name"].(string)
-		data, err := base64.StdEncoding.DecodeString(s.Data[configName])
+		if *name == "" {
+			*name = s.Metadata["name"].(string)
+		}
+		data, err := base64.StdEncoding.DecodeString(s.Data[*name])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -55,15 +56,29 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Format the contents of the given configuration file and print a JSON
-	// formated Kubernetes secret to stdout.
-	configFileData, err := ioutil.ReadFile(*configFilePath)
-	if err != nil {
-		log.Fatal(err)
+	var configFileData []byte
+	var err error
+	switch *configFilePath {
+	case "":
+		log.Fatal("config file path must be non-empty when creating secrets")
+	case "-":
+		if *name == "" {
+			log.Fatal("name must be non-empty when creating a secret from stdin")
+		}
+		configFileData, err = ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatal(err)
+		}
+	default:
+		configFileData, err = ioutil.ReadFile(*configFilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if *name == "" {
+			*name = path.Base(*configFilePath)
+		}
 	}
-	if *name == "" {
-		*name = path.Base(*configFilePath)
-	}
+
 	data := map[string]string{*name: base64.StdEncoding.EncodeToString(configFileData)}
 	metadata := map[string]interface{}{"name": name}
 	out, err := json.Marshal(&Secret{"v1", data, "Secret", metadata, "Opaque"})
