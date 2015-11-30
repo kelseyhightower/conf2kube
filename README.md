@@ -20,13 +20,13 @@ Usage of conf2kube:
 ### Create a new secret from a configuration file
 
 ```
-conf2kube -f redis.conf | kubectl create -f -
+$ conf2kube -f redis.conf | kubectl create -f -
 ```
 
 ### Update an existing secret
 
 ```
-conf2kube -f redis.conf | kubectl apply -f -
+$ conf2kube -f redis.conf | kubectl apply -f -
 ```
 
 ### Print the contents of a secret
@@ -34,7 +34,7 @@ conf2kube -f redis.conf | kubectl apply -f -
 conf2kube can print the contents of a secret previously created by conf2kube.
 
 ```
-kubectl get secrets redis.conf -o json | conf2kube
+$ kubectl get secrets redis.conf -o json | conf2kube
 ```
 
 The secret must have a data element that matches the secret name. All secrets created by
