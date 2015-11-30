@@ -5,6 +5,14 @@ based on contents of configuration files.
 
 This is not an official Google product.
 
+## Install
+
+Download a [binary release](https://github.com/kelseyhightower/conf2kube/releases) or use the `go get` command.
+
+```
+$ go get github.com/kelseyhightower/conf2kube
+```
+
 ## Usage
 
 ```
