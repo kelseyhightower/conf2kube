@@ -13,6 +13,12 @@ Download a [binary release](https://github.com/kelseyhightower/conf2kube/release
 $ go get github.com/kelseyhightower/conf2kube
 ```
 
+Mac OS X users can also install the Homebrew Formula:
+
+```
+$ brew install conf2kube
+```
+
 ## Usage
 
 ```
