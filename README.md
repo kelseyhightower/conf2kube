@@ -24,7 +24,10 @@ Usage of conf2kube:
         Path to configuration file. Defaults to stdin. (default "-")
   -n name
         The name to use for the Kubernetes secret. Defaults to basename of configuration file.
-  -x    Extract config from incoming JSON formated secret and print to stdout.
+  -k key
+        The key to use for the Kubernetes secret in the data section of the secret. 
+        Defaults to the name (stdin) or basename of configuration file.
+  -x    Extract config from incoming JSON formatted secret and print to stdout.
 ```
 
 ### Create a new secret from stdin
@@ -68,4 +71,27 @@ not match the secret name.
 
 ```
 $ kubectl get secrets redis.conf -o json | conf2kube -x -n redis-master.conf
+```
+
+### Create a new secret from a configuration file with multiple entries
+
+```
+$ conf2kube -n nginx-ssl-certs -f example.com.crt | kubectl create -f -
+```
+
+Add additional entries to the same secret using `kubectl patch`.
+
+```
+$ kubectl patch secret nginx-ssl-certs -p `conf2kube -n nginx-ssl-certs -f example.com.csr`
+$ kubectl patch secret nginx-ssl-certs -p `conf2kube -n nginx-ssl-certs -f example.com.key`
+```
+
+A secret named `nginx-ssl-certs` is created with 3 entries: `example.com.crt`, `example.com.csr` and `example.com.key`.
+
+### Extract the contents of a multi-value secret
+
+Use the `-x` flag to extract JSON formated secrets from stdin, and the `-k` flag to specify which secret.
+
+```
+$ kubectl get secret nginx-ssl-certs -o json | conf2kube -x -k example.com.csr
 ```
