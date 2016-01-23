@@ -34,6 +34,7 @@ type Secret struct {
 func main() {
 	configFilePath := flag.String("f", "-", "Path to configuration `file`. Defaults to stdin.")
 	name := flag.String("n", "", "The `name` to use for the Kubernetes secret. Defaults to basename of configuration file.")
+	key := flag.String("k", "", "The `key` to use for the Kubernetes secret in the data. Defaults to the `name` or basename of configuration file.")
 	extract := flag.Bool("x", false, "Extract configuration file from incoming JSON formated secret and print to stdout.")
 	flag.Parse()
 
@@ -45,10 +46,13 @@ func main() {
 		if err := decoder.Decode(&s); err != nil {
 			log.Fatal(err)
 		}
-		if *name == "" {
-			*name = s.Metadata["name"].(string)
+		if *key == "" {
+			if *name == "" {
+				*name = s.Metadata["name"].(string)
+			}
+			*key = *name
 		}
-		data, err := base64.StdEncoding.DecodeString(s.Data[*name])
+		data, err := base64.StdEncoding.DecodeString(s.Data[*key])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -65,6 +69,9 @@ func main() {
 		if *name == "" {
 			log.Fatal("name must be non-empty when creating a secret from stdin")
 		}
+		if *key == "" {
+			*key = *name
+		}
 		configFileData, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			log.Fatal(err)
@@ -77,9 +84,12 @@ func main() {
 		if *name == "" {
 			*name = path.Base(*configFilePath)
 		}
+		if *key == "" {
+			*key = path.Base(*configFilePath)
+		}
 	}
 
-	data := map[string]string{*name: base64.StdEncoding.EncodeToString(configFileData)}
+	data := map[string]string{*key: base64.StdEncoding.EncodeToString(configFileData)}
 	metadata := map[string]interface{}{"name": name}
 	out, err := json.Marshal(&Secret{"v1", data, "Secret", metadata, "Opaque"})
 	if err != nil {
